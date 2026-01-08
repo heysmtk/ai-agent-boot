@@ -1,0 +1,48 @@
+import os
+import subprocess
+
+def run_python_file(working_directory, file_path, args=None):
+    try:
+        working_dir_abs = os.path.abspath(working_directory)
+        target_path = os.path.normpath(os.path.join(working_dir_abs, file_path))
+        target_path_abs = os.path.abspath(target_path)
+
+        if os.path.commonpath([working_dir_abs, target_path_abs]) != working_dir_abs:
+            return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
+
+        if not os.path.isfile(target_path_abs):
+            return f'Error: "{file_path}" does not exist or is not a regular file'
+
+        if not target_path_abs.endswith(".py"):
+            return f'Error: "{file_path}" is not a Python file'
+
+        command = ["python", target_path_abs]
+        if args:
+            command.extend(args)
+            
+        result = subprocess.run(
+            command,
+            cwd=working_dir_abs,      # Nastavení pracovního adresáře pro proces
+            capture_output=True,      # Zachycení stdout a stderr
+            text=True,                # Výstup jako string, ne bytes
+            timeout=30                # Prevence nekonečných cyklů
+        )
+
+        output_parts = []
+        if result.returncode != 0:
+            output_parts.append(f"Process exited with code {result.returncode}")
+
+        if not result.stdout and not result.stderr:
+            output_parts.append("No output produced")
+        else:
+            if result.stdout:
+                output_parts.append(f"STDOUT:\n{result.stdout}")
+            if result.stderr:
+                output_parts.append(f"STDERR:\n{result.stderr}")
+
+        return "\n".join(output_parts)
+
+    except subprocess.TimeoutExpired:
+        return "Error: executing Python file: timed out after 30 seconds"
+    except Exception as e:
+        return f"Error: executing Python file: {e}"
