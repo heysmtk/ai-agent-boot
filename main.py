@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from prompts import system_prompt
-
+from call_function import available_functions
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -22,21 +22,31 @@ args = parser.parse_args()
 messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
 response = client.models.generate_content(
-    model='gemini-2.5-flash', 
+    model='gemini-2.5-flash',
     contents=messages,
     config=types.GenerateContentConfig(
         system_instruction=system_prompt,
-        temperature=0
+        temperature=0,
+        tools=[available_functions]
     )
 )
 
-user_prompt = args.user_prompt
-prompt_tokens_count = response.usage_metadata.prompt_token_count
-response_tokens_count = response.usage_metadata.candidates_token_count
+candidate = response.candidates[0]
+function_calls = []
 
-if args.verbose: 
-    print(f"User prompt: {user_prompt}")
-    print(f"Prompt tokens: {prompt_tokens_count}")   
-    print(f"Response tokens: {response_tokens_count}")
+if candidate.content.parts:
+    for part in candidate.content.parts:
+        if part.function_call:
+            function_calls.append(part.function_call)
+
+if args.verbose:
+    print(f"User prompt: {args.user_prompt}")
+    print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+    print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+
+if function_calls:
+    for fc in function_calls:
+        print(f"Calling function: {fc.name}({fc.args})")
 else:
-    print(response.text)
+    if response.text:
+        print(response.text)
