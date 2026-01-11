@@ -29,7 +29,7 @@ for i in range(20):
         time.sleep(1) # Ochrana proti kvótě
 
     response = client.models.generate_content(
-        model='gemini-2.0-flash-lite', # Použij svůj fungující model
+        model='gemini-2.5-flash', # Použij svůj fungující model
         contents=messages,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
