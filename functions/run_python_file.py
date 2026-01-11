@@ -22,10 +22,10 @@ def run_python_file(working_directory, file_path, args=None):
             
         result = subprocess.run(
             command,
-            cwd=working_dir_abs,      # Nastavení pracovního adresáře pro proces
-            capture_output=True,      # Zachycení stdout a stderr
-            text=True,                # Výstup jako string, ne bytes
-            timeout=30                # Prevence nekonečných cyklů
+            cwd=working_dir_abs,
+            capture_output=True,
+            text=True,
+            timeout=30
         )
 
         output_parts = []
